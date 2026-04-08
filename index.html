@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LARISA AI | Liquid Glass</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Библиотека для парсинга Markdown (форматирования текста) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Подсветка синтаксиса кода (тема Tokyo Night Dark) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/tokyo-night-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <style>
+        /* Импорт шрифтов */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #050505;
+            margin: 0;
+            overflow: hidden;
+            color: white;
+        }
+
+        /* Анимации для "жидкого" фона */
+        @keyframes blob {
+            0% { transform: translate3d(0px, 0px, 0) scale(1); }
+            33% { transform: translate3d(30px, -50px, 0) scale(1.1); }
+            66% { transform: translate3d(-20px, 20px, 0) scale(0.9); }
+            100% { transform: translate3d(0px, 0px, 0) scale(1); }
+        }
+
+        .animate-blob {
+            animation: blob 10s infinite alternate ease-in-out;
+            will-change: transform;
+            -webkit-backface-visibility: hidden;
+            -webkit-transform: translate3d(0, 0, 0);
+        }
+
+        .animation-delay-2000 { animation-delay: 2s; }
+        .animation-delay-4000 { animation-delay: 4s; }
+
+        /* ОПТИМИЗАЦИЯ ФОНА */
+        .blob-shape {
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .blob-pink { background: radial-gradient(circle, rgba(219, 39, 119, 0.4) 0%, rgba(219, 39, 119, 0) 70%); }
+        .blob-purple { background: radial-gradient(circle, rgba(147, 51, 234, 0.4) 0%, rgba(147, 51, 234, 0) 70%); }
+        .blob-indigo { background: radial-gradient(circle, rgba(79, 70, 229, 0.4) 0%, rgba(79, 70, 229, 0) 70%); }
+
+        /* Glassmorphism */
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+
+        .liquid-glass-input {
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .liquid-glass-btn {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0));
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        /* Стили сообщений */
+        .msg-enter {
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        @keyframes slideUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .msg-user {
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(168, 85, 247, 0.05));
+            border: 1px solid rgba(236, 72, 153, 0.2);
+            border-bottom-right-radius: 4px;
+        }
+
+        .msg-bot {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom-left-radius: 4px;
+        }
+
+        /* Индикатор печати */
+        .typing-dot { animation: typing 1.4s infinite ease-in-out both; }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Кастомный скроллбар */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+        /* MARKDOWN И ПАНЕЛИ КОДА */
+        .markdown-body { line-height: 1.6; word-break: break-word; }
+        .markdown-body p { margin-bottom: 0.75em; }
+        .markdown-body p:last-child { margin-bottom: 0; }
+        .markdown-body ul { list-style-type: disc; margin-left: 1.5em; margin-bottom: 0.75em; }
+        .markdown-body ol { list-style-type: decimal; margin-left: 1.5em; margin-bottom: 0.75em; }
+        .markdown-body strong { color: rgba(255, 255, 255, 0.95); font-weight: 600; }
+        .markdown-body a { color: #f472b6; text-decoration: underline; }
+        
+        /* Улучшенные стили таблиц и цитат */
+        .markdown-body blockquote { border-left: 3px solid #f472b6; padding-left: 1em; color: rgba(255,255,255,0.7); margin-bottom: 0.75em; background: rgba(255,255,255,0.02); padding-top: 0.5em; padding-bottom: 0.5em; border-radius: 0 8px 8px 0; }
+        .markdown-body table { width: 100%; border-collapse: collapse; margin-bottom: 1em; overflow-x: auto; display: block; }
+        .markdown-body th, .markdown-body td { border: 1px solid rgba(255,255,255,0.1); padding: 8px 12px; text-align: left; }
+        .markdown-body th { background: rgba(255,255,255,0.05); }
+
+        /* Инлайн код */
+        .markdown-body code:not([class*="language-"]) {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85em;
+            color: #fbcfe8;
+        }
+
+        /* Блоки кода (Специальная панель) */
+        .markdown-body pre {
+            background: rgba(10, 10, 15, 0.8) !important; /* Темное стекло */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            margin-top: 12px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .markdown-body pre code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85em;
+            padding: 16px;
+            display: block;
+            overflow-x: auto;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 6px 16px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: rgba(255, 255, 255, 0.5);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Затемнение при открытом меню */
+        .sidebar-overlay {
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
+        }
+        
+        /* Пульсация микрофона */
+        .recording { animation: pulseMic 1.5s infinite; color: #f87171 !important; }
+        @keyframes pulseMic { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+        
+        /* Анимация проигрывания речи */
+        .speaking { animation: pulseSpeak 1.5s infinite; color: #60a5fa !important; }
+        @keyframes pulseSpeak { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+    </style>
+</head>
+<body class="h-screen w-screen relative flex items-center justify-center p-4 sm:p-8">
+
+    <!-- Фоновые анимированные градиенты -->
+    <div class="absolute top-[-20%] left-[-20%] w-[50rem] h-[50rem] blob-shape blob-pink animate-blob"></div>
+    <div class="absolute top-[10%] right-[-20%] w-[55rem] h-[55rem] blob-shape blob-purple animate-blob animation-delay-2000"></div>
+    <div class="absolute bottom-[-30%] left-[10%] w-[60rem] h-[60rem] blob-shape blob-indigo animate-blob animation-delay-4000"></div>
+
+    <!-- Экран авторизации (Оверлей) -->
+    <div id="auth-overlay" class="absolute inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md bg-black/40 transition-all duration-500">
+        <div class="liquid-glass w-full max-w-md p-8 sm:p-10 rounded-[2.5rem] flex flex-col gap-6 shadow-2xl transform transition-transform duration-500">
+            <div class="text-center mb-2">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-pink-400 to-purple-500 flex items-center justify-center p-[2px] shadow-[0_0_20px_rgba(236,72,153,0.4)] mx-auto mb-4">
+                    <div class="w-full h-full bg-black/40 rounded-full backdrop-blur-md flex items-center justify-center text-2xl">✨</div>
+                </div>
+                <h2 id="auth-title" class="text-2xl font-semibold text-white tracking-wide">С возвращением</h2>
+                <p id="auth-subtitle" class="text-white/50 text-sm mt-1 transition-colors duration-300">Войдите, чтобы общаться с LARISA</p>
+            </div>
+            
+            <form id="auth-form" class="flex flex-col gap-4">
+                <input type="text" id="auth-name" class="hidden liquid-glass-input rounded-2xl px-5 py-4 text-white outline-none placeholder-white/40 transition-all focus:ring-1 focus:ring-pink-500/50" placeholder="Ваше имя" required disabled>
+                <input type="email" id="auth-email" class="liquid-glass-input rounded-2xl px-5 py-4 text-white outline-none placeholder-white/40 transition-all focus:ring-1 focus:ring-pink-500/50" placeholder="Email" required>
+                <input type="password" id="auth-pass" class="liquid-glass-input rounded-2xl px-5 py-4 text-white outline-none placeholder-white/40 transition-all focus:ring-1 focus:ring-pink-500/50" placeholder="Пароль" required>
+                
+                <button type="submit" id="auth-submit-btn" class="w-full py-4 mt-2 rounded-2xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-medium shadow-[0_0_15px_rgba(168,85,247,0.3)] transition-all transform hover:scale-[1.02] active:scale-95 text-lg">Войти</button>
+            </form>
+            
+            <div class="flex items-center gap-4 my-1">
+                <div class="h-px bg-white/10 flex-1"></div>
+                <span class="text-white/30 text-xs uppercase tracking-wider">или</span>
+                <div class="h-px bg-white/10 flex-1"></div>
+            </div>
+
+            <button type="button" id="google-login-btn" class="w-full py-3.5 rounded-2xl liquid-glass-input hover:bg-white/10 text-white font-medium transition-all transform hover:scale-[1.02] active:scale-95 text-sm sm:text-base flex items-center justify-center gap-3">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                <span>Продолжить с Google</span>
+            </button>
+
+            <div class="text-center text-sm text-white/50 mt-2">
+                <span id="auth-switch-text">Нет аккаунта?</span> 
+                <button type="button" id="auth-switch-btn" class="text-pink-400 hover:text-pink-300 transition-colors font-medium ml-1 outline-none">Создать</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно настроек -->
+    <div id="settings-modal" class="absolute inset-0 z-50 hidden flex items-center justify-center p-4 backdrop-blur-md bg-black/50 transition-opacity opacity-0 duration-300">
+        <div class="liquid-glass w-full max-w-lg p-6 sm:p-8 rounded-[2rem] flex flex-col gap-6 shadow-2xl transform scale-95 transition-transform duration-300">
+            <div class="flex justify-between items-center border-b border-white/10 pb-4">
+                <h2 class="text-xl font-semibold text-white tracking-wide flex items-center gap-2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    Настройки LARISA
+                </h2>
+                <button id="close-settings-btn" class="text-white/50 hover:text-white transition">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            
+            <div class="flex flex-col gap-4">
+                <div>
+                    <label class="block text-sm text-white/80 mb-2">Креативность (Температура): <span id="temp-val" class="font-mono text-pink-400">0.7</span></label>
+                    <input type="range" id="temp-slider" min="0" max="1" step="0.1" value="0.7" class="w-full accent-pink-500 bg-white/10 rounded-lg appearance-none h-2 cursor-pointer">
+                    <div class="flex justify-between text-[10px] text-white/40 mt-1">
+                        <span>Точная</span>
+                        <span>Сбалансированная</span>
+                        <span>Креативная</span>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm text-white/80 mb-2">Системный Промпт (Инструкция для ИИ):</label>
+                    <textarea id="system-prompt-input" rows="4" class="w-full liquid-glass-input rounded-xl text-white px-4 py-3 text-sm outline-none focus:ring-1 focus:ring-pink-500/50 resize-none"></textarea>
+                    <p class="text-[10px] text-white/40 mt-1">Влияет на поведение и личность бота. Требует начала нового чата для применения.</p>
+                </div>
+            </div>
+            
+            <div class="flex justify-end gap-3 mt-2">
+                <button id="reset-settings-btn" class="px-5 py-2.5 rounded-xl text-sm text-white/60 hover:text-white hover:bg-white/10 transition">Сбросить</button>
+                <button id="save-settings-btn" class="px-6 py-2.5 rounded-xl text-sm bg-gradient-to-r from-pink-500 to-purple-600 text-white font-medium hover:opacity-90 transition shadow-lg">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Главный контейнер (Жидкое стекло) -->
+    <div id="main-app" class="liquid-glass w-full max-w-3xl h-full max-h-[900px] rounded-[2.5rem] flex flex-col relative z-10 overflow-hidden shadow-2xl opacity-0 scale-95 pointer-events-none transition-all duration-500">
+        
+        <!-- Выезжающее боковое меню -->
+        <div id="sidebar-overlay" class="absolute inset-0 sidebar-overlay z-30 hidden opacity-0 transition-opacity duration-300 cursor-pointer"></div>
+        <div id="sidebar" class="absolute left-0 top-0 h-full w-64 liquid-glass bg-black/40 border-r border-white/10 transform -translate-x-full transition-transform duration-300 z-40 flex flex-col p-6 shadow-2xl">
+            <div class="flex items-center justify-between mb-8">
+                <h3 class="text-white font-semibold tracking-wide text-lg">Меню</h3>
+                <button id="close-sidebar-btn" class="w-8 h-8 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="flex flex-col gap-3 flex-1">
+                <button id="new-chat-btn" class="flex items-center gap-3 text-white/80 hover:text-white p-3 rounded-xl hover:bg-white/10 transition-all text-left w-full group">
+                    <div class="w-8 h-8 rounded-full bg-pink-500/20 text-pink-400 flex items-center justify-center group-hover:bg-pink-500 group-hover:text-white transition">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </div>
+                    <span class="font-medium">Новый чат</span>
+                </button>
+                <button id="export-chat-btn" class="flex items-center gap-3 text-white/80 hover:text-white p-3 rounded-xl hover:bg-white/10 transition-all text-left w-full group">
+                    <div class="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    </div>
+                    <span class="font-medium">Скачать чат</span>
+                </button>
+                <button id="settings-btn" class="flex items-center gap-3 text-white/80 hover:text-white p-3 rounded-xl hover:bg-white/10 transition-all text-left w-full group">
+                    <div class="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center group-hover:bg-indigo-500 group-hover:text-white transition">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    </div>
+                    <span class="font-medium">Настройки</span>
+                </button>
+                <button id="clear-chat-btn" class="flex items-center gap-3 text-white/80 hover:text-red-400 p-3 rounded-xl hover:bg-white/10 transition-all text-left w-full group mt-auto">
+                    <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-red-500/20 group-hover:text-red-400 transition">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </div>
+                    <span class="font-medium">Очистить историю</span>
+                </button>
+            </div>
+            
+            <div class="mt-6 pt-6 border-t border-white/10">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-pink-400 to-purple-500 flex items-center justify-center p-[2px]">
+                        <div class="w-full h-full bg-black/60 rounded-full flex items-center justify-center text-sm font-bold">L</div>
+                    </div>
+                    <div>
+                        <div class="text-white font-medium text-sm">LARISA AI</div>
+                        <div class="text-white/40 text-xs">v 3.0 Ultimate</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Шапка чата -->
+        <header class="h-20 border-b border-white/10 flex items-center px-4 sm:px-8 shrink-0 bg-white/5 z-20">
+            <button id="menu-btn" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 text-white/70 transition mr-3">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+            
+            <div class="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-tr from-pink-400 to-purple-500 flex items-center justify-center p-[2px] shadow-[0_0_15px_rgba(236,72,153,0.3)]">
+                <div class="w-full h-full bg-black/40 rounded-full backdrop-blur-md flex items-center justify-center text-xl">💋</div>
+                <div class="absolute bottom-0 right-0 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-green-400 border-2 border-black rounded-full shadow-[0_0_8px_rgba(74,222,128,0.6)]"></div>
+            </div>
+            
+            <div class="ml-4 flex-1">
+                <h1 class="text-white font-semibold text-base sm:text-lg tracking-wide">LARISA AI</h1>
+                <p id="user-status" class="text-white/40 text-[10px] sm:text-xs tracking-wider uppercase mt-0.5 truncate">Собеседник: Вы</p>
+            </div>
+            
+            <div class="ml-auto flex gap-2 sm:gap-3">
+                <button id="logout-btn" class="w-10 h-10 rounded-full liquid-glass-btn flex items-center justify-center hover:bg-white/10 transition text-white/70 hover:text-white hover:border-red-400 hover:shadow-[0_0_10px_rgba(248,113,113,0.3)]" title="Выйти">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Область сообщений -->
+        <main id="chat-container" class="flex-1 overflow-y-auto p-4 sm:p-8 flex flex-col gap-6 relative z-10 scroll-smooth pb-20">
+            <!-- Приветственный блок -->
+            <div id="welcome-block" class="flex flex-col gap-4 max-w-[85%] self-start msg-enter">
+                <div class="flex flex-col gap-2">
+                    <div class="text-xs text-white/30 ml-2 font-medium tracking-wide flex items-center gap-2">
+                        LARISA AI <span class="text-[9px] opacity-50 font-normal">Только что</span>
+                    </div>
+                    <div class="msg-bot rounded-3xl px-5 py-3.5 text-sm sm:text-base text-white/90 shadow-lg leading-relaxed">
+                        Привет! Я <b>LARISA AI</b> — твоя умная персональная помощница. Теперь я умею <b>сохранять историю</b> чатов, <b>говорить голосом</b> и у меня есть <b>меню настроек</b>! Чем я могу помочь сегодня?
+                    </div>
+                </div>
+                
+                <!-- Быстрые подсказки -->
+                <div id="quick-prompts" class="flex flex-wrap gap-2 mt-2 animation-delay-200">
+                    <button class="quick-prompt-btn px-4 py-2.5 rounded-2xl liquid-glass-btn text-xs sm:text-sm text-white/80 hover:text-white hover:bg-white/10 transition-all border border-white/5 hover:border-pink-500/30 text-left">
+                        💡 Накидай 5 идей для стартапа
+                    </button>
+                    <button class="quick-prompt-btn px-4 py-2.5 rounded-2xl liquid-glass-btn text-xs sm:text-sm text-white/80 hover:text-white hover:bg-white/10 transition-all border border-white/5 hover:border-purple-500/30 text-left">
+                        💻 Напиши игру Змейка на Python
+                    </button>
+                    <button class="quick-prompt-btn px-4 py-2.5 rounded-2xl liquid-glass-btn text-xs sm:text-sm text-white/80 hover:text-white hover:bg-white/10 transition-all border border-white/5 hover:border-blue-500/30 text-left">
+                        ✨ Создай HTML кнопку со стилем
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Индикатор печати -->
+        <div id="typing-indicator" class="hidden absolute bottom-28 left-8 msg-bot rounded-full px-4 py-2 flex gap-1.5 items-center z-20 shadow-lg">
+            <div class="w-1.5 h-1.5 bg-white/60 rounded-full typing-dot"></div>
+            <div class="w-1.5 h-1.5 bg-white/60 rounded-full typing-dot"></div>
+            <div class="w-1.5 h-1.5 bg-white/60 rounded-full typing-dot"></div>
+        </div>
+
+        <!-- Зона ввода -->
+        <footer class="p-4 sm:p-6 shrink-0 relative z-20">
+            <div class="liquid-glass-input rounded-3xl flex items-end p-2 focus-within:ring-1 focus-within:ring-pink-500/30 transition-all duration-300 relative">
+                
+                <!-- Кнопка микрофона -->
+                <button id="mic-btn" class="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-full flex items-center justify-center text-white/40 hover:text-white hover:bg-white/5 transition mb-0.5" title="Голосовой ввод">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                </button>
+                
+                <textarea id="user-input" rows="1" class="flex-1 bg-transparent border-none text-white px-2 py-3 sm:py-3.5 outline-none placeholder-white/30 text-sm sm:text-base resize-none self-center" placeholder="Спроси LARISA или введи код..." style="max-height: 150px;"></textarea>
+                
+                <!-- Кнопка Остановить (Скрыта по умолчанию) -->
+                <button id="stop-btn" class="hidden w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-full bg-white/10 hover:bg-red-500/80 flex items-center justify-center text-white transition-all transform hover:scale-105 active:scale-95 ml-1 mb-0.5" title="Остановить генерацию">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="6" width="12" height="12" rx="2" ry="2"></rect></svg>
+                </button>
+
+                <!-- Кнопка Отправить -->
+                <button id="send-btn" class="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 hover:opacity-90 flex items-center justify-center text-white transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(236,72,153,0.4)] ml-1 mb-0.5">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="translate-x-[-1px]"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+            <div class="text-center mt-3 text-[10px] text-white/20">LARISA AI может ошибаться. История сохраняется автоматически в браузере.</div>
+        </footer>
+
+    </div>
+
+    <script>
+        // API Настройки
+        const API_KEY = 'l8s0ggDe9RZFAjZeo6fXFqZziiThzo38';
+        const API_URL = 'https://api.mistral.ai/v1/chat/completions';
+
+        // Настройка парсера Markdown (marked.js) + Подсветка синтаксиса
+        marked.setOptions({
+            highlight: function(code, lang) {
+                const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+                return hljs.highlight(code, { language }).value;
+            },
+            breaks: true,
+            gfm: true
+        });
+
+        // Элементы DOM
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const welcomeBlock = document.getElementById('welcome-block');
+        const quickPrompts = document.getElementById('quick-prompts');
+        const quickPromptBtns = document.querySelectorAll('.quick-prompt-btn');
+
+        // Меню
+        const menuBtn = document.getElementById('menu-btn');
+        const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const newChatBtn = document.getElementById('new-chat-btn');
+        const clearChatBtn = document.getElementById('clear-chat-btn');
+        const exportChatBtn = document.getElementById('export-chat-btn');
+        const settingsBtn = document.getElementById('settings-btn');
+
+        // Настройки
+        const settingsModal = document.getElementById('settings-modal');
+        const closeSettingsBtn = document.getElementById('close-settings-btn');
+        const saveSettingsBtn = document.getElementById('save-settings-btn');
+        const resetSettingsBtn = document.getElementById('reset-settings-btn');
+        const tempSlider = document.getElementById('temp-slider');
+        const tempVal = document.getElementById('temp-val');
+        const systemPromptInput = document.getElementById('system-prompt-input');
+
+        // Элементы авторизации
+        const authOverlay = document.getElementById('auth-overlay');
+        const mainApp = document.getElementById('main-app');
+        const authForm = document.getElementById('auth-form');
+        const authTitle = document.getElementById('auth-title');
+        const authSubtitle = document.getElementById('auth-subtitle');
+        const authName = document.getElementById('auth-name');
+        const authSubmitBtn = document.getElementById('auth-submit-btn');
+        const authSwitchBtn = document.getElementById('auth-switch-btn');
+        const authSwitchText = document.getElementById('auth-switch-text');
+        const googleLoginBtn = document.getElementById('google-login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const userStatus = document.getElementById('user-status');
+        const micBtn = document.getElementById('mic-btn');
+
+        let isLoginMode = true;
+        let currentUser = 'Вы';
+        let currentAbortController = null;
+        let currentUtterance = null; // Для озвучки
+
+        // Дефолтные настройки
+        const DEFAULT_PROMPT = 'СТРОГОЕ ПРАВИЛО: Твое имя — LARISA AI (Лариса). Ты НИКОГДА не называешь себя Mistral. Ты продвинутая, дерзкая, современная нейросеть-помощница. Всегда отвечай на русском. Ты отлично пишешь код: используй Markdown блоки для вывода любого программного кода.';
+        const DEFAULT_TEMP = 0.7;
+
+        let botSettings = {
+            temperature: parseFloat(localStorage.getItem('larisa_temp')) || DEFAULT_TEMP,
+            systemPrompt: localStorage.getItem('larisa_prompt') || DEFAULT_PROMPT
+        };
+
+        // --- САЙДБАР ---
+        function toggleSidebar() {
+            const isClosed = sidebar.classList.contains('-translate-x-full');
+            if (isClosed) {
+                sidebarOverlay.classList.remove('hidden');
+                setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
+                sidebar.classList.remove('-translate-x-full');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                sidebarOverlay.classList.add('opacity-0');
+                setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+            }
+        }
+        menuBtn.addEventListener('click', toggleSidebar);
+        closeSidebarBtn.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+
+        // --- НАСТРОЙКИ ---
+        function openSettings() {
+            tempSlider.value = botSettings.temperature;
+            tempVal.innerText = botSettings.temperature;
+            systemPromptInput.value = botSettings.systemPrompt;
+            
+            settingsModal.classList.remove('hidden');
+            setTimeout(() => {
+                settingsModal.classList.remove('opacity-0');
+                settingsModal.firstElementChild.classList.remove('scale-95');
+            }, 10);
+            toggleSidebar();
+        }
+
+        function closeSettings() {
+            settingsModal.classList.add('opacity-0');
+            settingsModal.firstElementChild.classList.add('scale-95');
+            setTimeout(() => settingsModal.classList.add('hidden'), 300);
+        }
+
+        settingsBtn.addEventListener('click', openSettings);
+        closeSettingsBtn.addEventListener('click', closeSettings);
+        
+        tempSlider.addEventListener('input', (e) => {
+            tempVal.innerText = e.target.value;
+        });
+
+        saveSettingsBtn.addEventListener('click', () => {
+            botSettings.temperature = parseFloat(tempSlider.value);
+            botSettings.systemPrompt = systemPromptInput.value.trim();
+            
+            localStorage.setItem('larisa_temp', botSettings.temperature);
+            localStorage.setItem('larisa_prompt', botSettings.systemPrompt);
+            
+            // Если промпт изменился, обновляем его в текущей истории чата (скрыто)
+            if(chatHistory.length > 0 && chatHistory[0].role === 'system') {
+                chatHistory[0].content = botSettings.systemPrompt;
+                saveChat();
+            }
+            closeSettings();
+        });
+
+        resetSettingsBtn.addEventListener('click', () => {
+            tempSlider.value = DEFAULT_TEMP;
+            tempVal.innerText = DEFAULT_TEMP;
+            systemPromptInput.value = DEFAULT_PROMPT;
+        });
+
+        // --- ЭКСПОРТ ЧАТА ---
+        exportChatBtn.addEventListener('click', () => {
+            if (chatHistory.length <= 1) {
+                alert('Чат пока пуст. Напишите что-нибудь LARISA!');
+                return;
+            }
+            let textToSave = "--- ЭКСПОРТ ЧАТА LARISA AI ---\n\n";
+            chatHistory.forEach(msg => {
+                if (msg.role === 'system') return;
+                const roleName = msg.role === 'user' ? currentUser : 'LARISA AI';
+                textToSave += `[${roleName}]:\n${msg.content}\n\n`;
+            });
+            
+            const blob = new Blob([textToSave], { type: "text/plain;charset=utf-8" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "larisa_chat_export.txt";
+            link.click();
+            toggleSidebar();
+        });
+
+        // --- АВТОРИЗАЦИЯ ---
+        authSwitchBtn.addEventListener('click', () => {
+            isLoginMode = !isLoginMode;
+            if (isLoginMode) {
+                authTitle.innerText = 'С возвращением';
+                authSubtitle.innerText = 'Войдите, чтобы общаться с LARISA';
+                authName.classList.add('hidden');
+                authName.disabled = true;
+                authSubmitBtn.innerText = 'Войти';
+                authSwitchText.innerText = 'Нет аккаунта?';
+                authSwitchBtn.innerText = 'Создать';
+            } else {
+                authTitle.innerText = 'Создать аккаунт';
+                authSubtitle.innerText = 'Начните общаться с ИИ';
+                authName.classList.remove('hidden');
+                authName.disabled = false;
+                authSubmitBtn.innerText = 'Зарегистрироваться';
+                authSwitchText.innerText = 'Уже есть аккаунт?';
+                authSwitchBtn.innerText = 'Войти';
+            }
+        });
+
+        function showApp(userName) {
+            currentUser = userName;
+            userStatus.innerText = `Онлайн: ${userName}`;
+            authOverlay.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => authOverlay.classList.add('hidden'), 500);
+            mainApp.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+        }
+
+        authForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            let name = 'Гость';
+            if (!isLoginMode) {
+                name = authName.value.trim() || 'Пользователь';
+                localStorage.setItem('larisa_user_name', name);
+            } else {
+                name = localStorage.getItem('larisa_user_name') || email.split('@')[0];
+            }
+            localStorage.setItem('larisa_auth', 'true');
+            showApp(name);
+            loadChat(); // Загружаем историю после входа
+        });
+
+        let googleClient;
+        let originalGoogleBtnContent = '';
+        window.addEventListener('load', () => {
+            if (window.google) {
+                googleClient = google.accounts.oauth2.initTokenClient({
+                    client_id: '332099797152-5vscnrdirtnk13tlfcqteogev9pj001v.apps.googleusercontent.com',
+                    scope: 'profile email',
+                    callback: (tokenResponse) => {
+                        if (tokenResponse && tokenResponse.access_token) {
+                            fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                                headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                const googleName = data.name || data.given_name || 'Пользователь Google';
+                                localStorage.setItem('larisa_user_name', googleName);
+                                localStorage.setItem('larisa_auth', 'true');
+                                googleLoginBtn.innerHTML = originalGoogleBtnContent;
+                                googleLoginBtn.disabled = false;
+                                showApp(googleName);
+                                loadChat();
+                            })
+                            .catch(err => {
+                                console.error('Ошибка получения профиля Google:', err);
+                                googleLoginBtn.innerHTML = originalGoogleBtnContent;
+                                googleLoginBtn.disabled = false;
+                            });
+                        } else {
+                            googleLoginBtn.innerHTML = originalGoogleBtnContent;
+                            googleLoginBtn.disabled = false;
+                        }
+                    },
+                });
+            }
+        });
+
+        googleLoginBtn.addEventListener('click', () => {
+            if (window.location.protocol === 'file:') {
+                const originalText = authSubtitle.innerText;
+                authSubtitle.innerHTML = '<span class="text-red-400 font-medium tracking-normal leading-tight block">Google запрещает вход через file://<br>Используйте локальный сервер!</span>';
+                originalGoogleBtnContent = googleLoginBtn.innerHTML;
+                googleLoginBtn.innerHTML = '<span class="text-red-300">Ошибка протокола</span>';
+                googleLoginBtn.classList.add('bg-red-500/20', 'border-red-500/50');
+                setTimeout(() => {
+                    authSubtitle.innerText = originalText;
+                    googleLoginBtn.innerHTML = originalGoogleBtnContent;
+                    googleLoginBtn.classList.remove('bg-red-500/20', 'border-red-500/50');
+                }, 4000);
+                return;
+            }
+            if (!googleClient) { alert("Google API еще загружается, подождите."); return; }
+            originalGoogleBtnContent = googleLoginBtn.innerHTML;
+            googleLoginBtn.innerHTML = '<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+            googleLoginBtn.disabled = true;
+            googleClient.requestAccessToken();
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('larisa_auth');
+            mainApp.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+            authOverlay.classList.remove('hidden');
+            setTimeout(() => { authOverlay.classList.remove('opacity-0', 'pointer-events-none'); }, 10);
+            document.getElementById('auth-email').value = '';
+            document.getElementById('auth-pass').value = '';
+            initChat(true); // Сброс чата при выходе из аккаунта
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('larisa_auth') === 'true') {
+                const savedName = localStorage.getItem('larisa_user_name') || 'Пользователь';
+                showApp(savedName);
+                loadChat();
+            }
+        });
+
+        // --- ГОЛОСОВОЙ ВВОД ---
+        let recognition;
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRec();
+            recognition.lang = 'ru-RU';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                userInput.value += (userInput.value ? ' ' : '') + transcript;
+                userInput.style.height = 'auto';
+                userInput.style.height = (userInput.scrollHeight < 150 ? userInput.scrollHeight : 150) + 'px';
+            };
+            
+            recognition.onstart = () => micBtn.classList.add('recording');
+            recognition.onend = () => micBtn.classList.remove('recording');
+            recognition.onerror = (e) => {
+                console.error("Speech Error:", e);
+                micBtn.classList.remove('recording');
+            };
+        }
+
+        micBtn.addEventListener('click', () => {
+            if (recognition) {
+                if (micBtn.classList.contains('recording')) {
+                    recognition.stop();
+                } else {
+                    recognition.start();
+                }
+            } else {
+                alert("Ваш браузер не поддерживает голосовой ввод. Используйте Chrome или Edge.");
+            }
+        });
+        
+        // --- ОЗВУЧКА ОТВЕТА (TTS) ---
+        function speakText(text, btnElement) {
+            if ('speechSynthesis' in window) {
+                // Если уже говорит - останавливаем
+                if (window.speechSynthesis.speaking) {
+                    window.speechSynthesis.cancel();
+                    document.querySelectorAll('.speaking').forEach(el => el.classList.remove('speaking'));
+                    return;
+                }
+                
+                // Очищаем от Markdown символов для нормального чтения
+                const cleanText = text.replace(/#|\*|_|`|>|\[|\]|\(|\)/g, '');
+                
+                currentUtterance = new SpeechSynthesisUtterance(cleanText);
+                currentUtterance.lang = 'ru-RU';
+                currentUtterance.rate = 1.0;
+                
+                currentUtterance.onstart = () => btnElement.classList.add('speaking');
+                currentUtterance.onend = () => btnElement.classList.remove('speaking');
+                currentUtterance.onerror = () => btnElement.classList.remove('speaking');
+                
+                window.speechSynthesis.speak(currentUtterance);
+            } else {
+                alert("Синтез речи не поддерживается вашим браузером.");
+            }
+        }
+
+        // --- ЛОГИКА ЧАТА LARISA AI ---
+        let chatHistory = [];
+
+        function saveChat() {
+            localStorage.setItem('larisa_history', JSON.stringify(chatHistory));
+        }
+
+        function loadChat() {
+            const saved = localStorage.getItem('larisa_history');
+            if (saved) {
+                try {
+                    chatHistory = JSON.parse(saved);
+                    // Очистка экрана
+                    const messages = chatContainer.querySelectorAll('.msg-bubble-wrap');
+                    messages.forEach(msg => msg.remove());
+                    
+                    if (chatHistory.length > 1) {
+                        welcomeBlock.classList.add('hidden');
+                        if(quickPrompts) quickPrompts.classList.add('hidden');
+                    }
+                    
+                    chatHistory.forEach(msg => {
+                        if (msg.role !== 'system') {
+                            appendMessage(msg.content, msg.role, false);
+                        }
+                    });
+                    scrollToBottom();
+                } catch(e) {
+                    console.error('Ошибка загрузки истории', e);
+                    initChat(true);
+                }
+            } else {
+                initChat(false);
+            }
+        }
+
+        function initChat(clearLocal = true) {
+            chatHistory = [{ role: 'system', content: botSettings.systemPrompt }];
+            if (clearLocal) {
+                localStorage.removeItem('larisa_history');
+                const messages = chatContainer.querySelectorAll('.msg-bubble-wrap');
+                messages.forEach(msg => msg.remove());
+                welcomeBlock.classList.remove('hidden');
+                if(quickPrompts) quickPrompts.classList.remove('hidden');
+            }
+            userInput.value = '';
+            userInput.style.height = 'auto';
+            if (window.speechSynthesis) window.speechSynthesis.cancel();
+        }
+
+        newChatBtn.addEventListener('click', () => { initChat(true); toggleSidebar(); });
+        clearChatBtn.addEventListener('click', () => { initChat(true); toggleSidebar(); });
+
+        quickPromptBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const text = btn.innerText.replace(/^[^\s]+\s/, '');
+                userInput.value = text;
+                userInput.focus();
+                handleSend();
+            });
+        });
+
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight < 150 ? this.scrollHeight : 150) + 'px';
+        });
+
+        async function copyToClipboard(text, btnElement) {
+            try {
+                await navigator.clipboard.writeText(text);
+                const originalHTML = btnElement.innerHTML;
+                btnElement.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> <span class="text-green-400">Скопировано</span>';
+                setTimeout(() => { btnElement.innerHTML = originalHTML; }, 2000);
+            } catch (err) { console.error('Ошибка копирования', err); }
+        }
+
+        function getTimeStamp() {
+            return new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function appendMessage(text, role, save = true) {
+            const isUser = role === 'user';
+            
+            if(welcomeBlock && !welcomeBlock.classList.contains('hidden')) {
+                welcomeBlock.classList.add('hidden');
+            }
+
+            const msgWrapper = document.createElement('div');
+            msgWrapper.className = `msg-bubble-wrap flex flex-col gap-1 max-w-[95%] sm:max-w-[85%] msg-enter group ${isUser ? 'self-end items-end' : 'self-start'}`;
+            
+            // Имя + Время
+            const nameDiv = document.createElement('div');
+            nameDiv.className = `text-[11px] text-white/40 px-3 font-medium tracking-wide flex items-center gap-2 ${isUser ? 'justify-end' : 'justify-start'}`;
+            nameDiv.innerHTML = isUser 
+                ? `<span class="text-[9px] opacity-50 font-normal">${getTimeStamp()}</span> ${currentUser}` 
+                : `LARISA AI <span class="text-[9px] opacity-50 font-normal">${getTimeStamp()}</span>`;
+            
+            // Баббл (Парсим Markdown)
+            const bubble = document.createElement('div');
+            bubble.className = `rounded-3xl px-5 py-3.5 text-sm sm:text-base text-white/95 shadow-lg markdown-body leading-relaxed w-full ${isUser ? 'msg-user' : 'msg-bot'}`;
+            
+            // Если юзер — просто выводим текст. Если бот — парсим Markdown
+            bubble.innerHTML = isUser ? text.replace(/\n/g, '<br>') : marked.parse(text);
+
+            // ДОБАВЛЯЕМ ПАНЕЛИ ДЛЯ КОДА (если это сообщение бота)
+            if (!isUser) {
+                bubble.querySelectorAll('pre').forEach(pre => {
+                    const codeBlock = pre.querySelector('code');
+                    let lang = 'code';
+                    if(codeBlock && codeBlock.className) {
+                        const match = codeBlock.className.match(/language-(\w+)/);
+                        if(match) lang = match[1];
+                    }
+
+                    const header = document.createElement('div');
+                    header.className = 'code-header';
+                    
+                    const langSpan = document.createElement('span');
+                    langSpan.innerText = lang;
+                    
+                    const copyBtn = document.createElement('button');
+                    copyBtn.className = 'flex items-center gap-1.5 hover:text-white transition cursor-pointer';
+                    copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Копировать';
+                    
+                    copyBtn.onclick = () => copyToClipboard(codeBlock.innerText, copyBtn);
+
+                    header.appendChild(langSpan);
+                    header.appendChild(copyBtn);
+                    
+                    pre.insertBefore(header, pre.firstChild);
+                });
+            }
+
+            msgWrapper.appendChild(nameDiv);
+            msgWrapper.appendChild(bubble);
+
+            // Панель действий (Копировать / Озвучить) для бота
+            if (!isUser) {
+                const actionBar = document.createElement('div');
+                actionBar.className = 'flex gap-4 px-3 mt-0.5 opacity-0 transition-opacity duration-300 group-hover:opacity-100';
+                
+                // Копировать
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'flex items-center gap-1 text-[10px] text-white/30 hover:text-white/80 transition-colors uppercase tracking-wider font-semibold';
+                copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Скопировать';
+                copyBtn.onclick = () => copyToClipboard(text, copyBtn);
+                
+                // Озвучить
+                const speakBtn = document.createElement('button');
+                speakBtn.className = 'flex items-center gap-1 text-[10px] text-white/30 hover:text-white/80 transition-colors uppercase tracking-wider font-semibold';
+                speakBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg> Озвучить';
+                speakBtn.onclick = () => speakText(text, speakBtn);
+
+                actionBar.appendChild(copyBtn);
+                actionBar.appendChild(speakBtn);
+                msgWrapper.appendChild(actionBar);
+            }
+
+            chatContainer.appendChild(msgWrapper);
+            if (save) saveChat();
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function setTyping(isTyping) {
+            if (isTyping) {
+                typingIndicator.classList.remove('hidden');
+                sendBtn.classList.add('hidden');
+                stopBtn.classList.remove('hidden');
+                scrollToBottom();
+            } else {
+                typingIndicator.classList.add('hidden');
+                sendBtn.classList.remove('hidden');
+                stopBtn.classList.add('hidden');
+            }
+        }
+
+        // Остановка генерации
+        stopBtn.addEventListener('click', () => {
+            if (currentAbortController) {
+                currentAbortController.abort();
+            }
+        });
+
+        async function fetchMistralResponse(userMessage) {
+            chatHistory.push({ role: 'user', content: userMessage });
+            saveChat();
+            currentAbortController = new AbortController();
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${API_KEY}`
+                    },
+                    signal: currentAbortController.signal,
+                    body: JSON.stringify({
+                        model: 'mistral-small-latest',
+                        messages: chatHistory,
+                        temperature: botSettings.temperature
+                    })
+                });
+
+                if (!response.ok) throw new Error(`Ошибка API: ${response.status}`);
+
+                const data = await response.json();
+                const botReply = data.choices[0].message.content;
+
+                chatHistory.push({ role: 'assistant', content: botReply });
+                saveChat();
+                return botReply;
+
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    chatHistory.pop(); // Удаляем запрос юзера, раз отменили
+                    saveChat();
+                    return "🚫 *Генерация остановлена пользователем.*";
+                }
+                console.error('API Error:', error);
+                return "Извините, у меня (LARISA AI) сейчас технические неполадки с сетью.";
+            } finally {
+                currentAbortController = null;
+            }
+        }
+
+        async function handleSend() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            // Если бот уже говорит, замолкаем
+            if (window.speechSynthesis) window.speechSynthesis.cancel();
+
+            userInput.value = '';
+            userInput.style.height = 'auto';
+
+            appendMessage(text, 'user');
+            setTyping(true);
+
+            const botReply = await fetchMistralResponse(text);
+
+            setTyping(false);
+            appendMessage(botReply, 'bot');
+        }
+
+        sendBtn.addEventListener('click', handleSend);
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+            }
+        });
+    </script>
+</body>
+</html>
